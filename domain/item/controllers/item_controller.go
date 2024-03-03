@@ -6,17 +6,18 @@ import (
 	"net/http"
 	"strconv"
 
+	vl "github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
 type ItemController struct {
 	itemService services.ItemService
+	validate    vl.Validate
 }
 
 func (controller ItemController) Create(c echo.Context) error {
 	type payload struct {
-		IdItem      int     `json:"id_item" validate:"required"`
 		NamaItem    string  `json:"nama_item"  validate:"required"`
 		Unit        string  `json:"unit" validate:"required"`
 		Stok        int     `json:"stok" validate:"required"`
@@ -26,6 +27,10 @@ func (controller ItemController) Create(c echo.Context) error {
 	payloadValidator := new(payload)
 
 	if err := c.Bind(payloadValidator); err != nil {
+		return err
+	}
+
+	if err := controller.validate.Struct(payloadValidator); err != nil {
 		return err
 	}
 
@@ -41,7 +46,6 @@ func (controller ItemController) Create(c echo.Context) error {
 
 func (controller ItemController) Update(c echo.Context) error {
 	type payload struct {
-		IdItem      int     `json:"id_item" validate:"required"`
 		NamaItem    string  `json:"nama_item"  validate:"required"`
 		Unit        string  `json:"unit" validate:"required"`
 		Stok        int     `json:"stok" validate:"required"`
@@ -51,6 +55,10 @@ func (controller ItemController) Update(c echo.Context) error {
 	payloadValidator := new(payload)
 
 	if err := c.Bind(payloadValidator); err != nil {
+		return err
+	}
+
+	if err := controller.validate.Struct(payloadValidator); err != nil {
 		return err
 	}
 
@@ -96,7 +104,10 @@ func (controller ItemController) GetById(c echo.Context) error {
 
 func NewItemController(db *gorm.DB) ItemController {
 	service := services.NewItemService(db)
-	controller := ItemController{itemService: service}
+	controller := ItemController{
+		itemService: service,
+		validate:    *vl.New(),
+	}
 
 	return controller
 }
